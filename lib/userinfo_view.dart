@@ -14,27 +14,44 @@ class UserInfoView extends StatelessWidget {
         future: getUserData(),
         builder:
             (BuildContext context, AsyncSnapshot<DocumentSnapshot> snapshot) {
-          if (snapshot.hasData) {
-            final userData = snapshot.data!.data() as Map<String, dynamic>;
+          if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+              child: CircularProgressIndicator(),
+            );
+          } else if (snapshot.hasData) {
+            final userData = snapshot.data!.data() as Map<String, dynamic>;
+            return ListView(
+              padding: EdgeInsets.all(16),
+              children: [
+                Container(
+                  alignment: Alignment.center,
+                  child: CircleAvatar(
+                    radius: 60,
+                    backgroundColor: Colors.green.shade600,
+                    child: Icon(
+                      Icons.person,
+                      size: 80,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+                SizedBox(height: 16),
+                if (userData['name'] != null)
                   UserInfoField(
                     label: 'Name:',
                     value: userData['name'],
                   ),
+                if (userData['address'] != null)
                   UserInfoField(
                     label: 'Address:',
                     value: userData['address'],
                   ),
+                if (userData['dob'] != null)
                   UserInfoField(
                     label: 'Date of Birth:',
                     value: userData['dob'],
                   ),
-                ],
-              ),
+              ],
             );
           } else if (snapshot.hasError) {
             return Center(
@@ -69,24 +86,28 @@ class UserInfoField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-      child: RichText(
-        text: TextSpan(
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: Colors.black,
-          ),
-          children: [
-            TextSpan(text: label),
-            TextSpan(
-              text: value,
-              style: TextStyle(
-                fontWeight: FontWeight.normal,
-              ),
+      padding: EdgeInsets.symmetric(vertical: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Colors.black,
             ),
-          ],
-        ),
+          ),
+          SizedBox(height: 4),
+          Text(
+            value,
+            style: TextStyle(
+              fontWeight: FontWeight.normal,
+              fontSize: 18,
+            ),
+          ),
+          Divider(height: 20),
+        ],
       ),
     );
   }
