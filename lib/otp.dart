@@ -82,92 +82,109 @@ class _MyOtpState extends State<MyOtp> {
         margin: EdgeInsets.only(left: 25, right: 25),
         alignment: Alignment.center,
         child: SingleChildScrollView(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Image.asset(
-                'assets/img1.png',
-                width: 150,
-                height: 150,
-              ),
-              SizedBox(
-                height: 25,
-              ),
-              Text(
-                "Phone Verification",
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-              ),
-              SizedBox(
-                height: 10,
-              ),
-              Text(
-                "We need to register your phone before getting started!",
-                style: TextStyle(
-                  fontSize: 16,
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Image.asset(
+                  'assets/img1.png',
+                  width: 150,
+                  height: 150,
                 ),
-                textAlign: TextAlign.center,
-              ),
-              SizedBox(
-                height: 30,
-              ),
-              Pinput(
-                length: 6,
-                onChanged: (value) {
-                  verificationCode = value;
-                },
-                showCursor: true,
-                onCompleted: (pin) => print(pin),
-              ),
-              SizedBox(
-                height: 20,
-              ),
-              SizedBox(
-                width: double.infinity,
-                height: 45,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    primary: Colors.green.shade600,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
+                SizedBox(
+                  height: 25,
+                ),
+                Text(
+                  "Phone Verification",
+                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                ),
+                SizedBox(
+                  height: 10,
+                ),
+                Text(
+                  "We need to register your phone before getting started!",
+                  style: TextStyle(
+                    fontSize: 16,
                   ),
-                  onPressed: () async {
-                    print("OTP: $verificationCode");
-                    setState(() {
-                      isLoaded = true;
-                    });
-                    if (_formKey.currentState!.validate()) {
-                      try {
-                        PhoneAuthCredential credential =
-                            PhoneAuthProvider.credential(
-                          verificationId: MyPhone.verificationId,
-                          smsCode: verificationCode,
-                        );
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(
+                  height: 30,
+                ),
+                Pinput(
+                  length: 6,
+                  onChanged: (value) {
+                    verificationCode = value;
+                  },
+                  showCursor: true,
+                  onCompleted: (pin) => print(pin),
+                ),
+                SizedBox(
+                  height: 20,
+                ),
+                SizedBox(
+                  width: double.infinity,
+                  height: 45,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      primary: Colors.green.shade600,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    onPressed: () async {
+                      print("OTP: $verificationCode");
+                      setState(() {
+                        isLoaded = true;
+                      });
+                      if (_formKey.currentState!.validate()) {
+                        try {
+                          PhoneAuthCredential credential =
+                              PhoneAuthProvider.credential(
+                            verificationId: MyPhone.verificationId,
+                            smsCode: verificationCode,
+                          );
 
-                        setState(() {
-                          isLoaded = false;
-                        });
+                          setState(() {
+                            isLoaded = false;
+                          });
 
-                        final UserCredential userCredential =
-                            await auth.signInWithCredential(credential);
-                        final User? user = userCredential.user;
+                          final UserCredential userCredential =
+                              await auth.signInWithCredential(credential);
+                          final User? user = userCredential.user;
 
-                        if (user != null) {
-                          // Check if user data exists for the current user
-                          final currentUser = FirebaseAuth.instance.currentUser;
-                          final usersCollection =
-                              FirebaseFirestore.instance.collection('Users');
-                          final userData =
-                              await usersCollection.doc(currentUser!.uid).get();
+                          if (user != null) {
+                            // Check if user data exists for the current user
+                            final currentUser =
+                                FirebaseAuth.instance.currentUser;
+                            final usersCollection =
+                                FirebaseFirestore.instance.collection('Users');
+                            final userData = await usersCollection
+                                .doc(currentUser!.uid)
+                                .get();
 
-                          if (userData.exists) {
-                            // User data exists, navigate to UserInfoView page
-                            Navigator.pushReplacementNamed(context, 'showData');
+                            if (userData.exists) {
+                              // User data exists, navigate to UserInfoView page
+                              Navigator.pushReplacementNamed(
+                                  context, 'showData');
+                            } else {
+                              // User data doesn't exist, navigate to Register page
+                              Navigator.pushReplacementNamed(
+                                  context, 'register');
+                            }
                           } else {
-                            // User data doesn't exist, navigate to Register page
-                            Navigator.pushReplacementNamed(context, 'register');
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text("Wrong OTP! Please enter again"),
+                              ),
+                            );
+                            print("Wrong OTP");
                           }
-                        } else {
+                        } catch (e) {
+                          setState(() {
+                            isLoaded = false;
+                          });
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
                               content: Text("Wrong OTP! Please enter again"),
@@ -175,40 +192,30 @@ class _MyOtpState extends State<MyOtp> {
                           );
                           print("Wrong OTP");
                         }
-                      } catch (e) {
-                        setState(() {
-                          isLoaded = false;
-                        });
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text("Wrong OTP! Please enter again"),
-                          ),
-                        );
-                        print("Wrong OTP");
                       }
-                    }
-                  },
-                  child: Text("Verify Phone Number"),
-                ),
-              ),
-              Row(
-                children: [
-                  TextButton(
-                    onPressed: () {
-                      Navigator.pushNamedAndRemoveUntil(
-                        context,
-                        'phone',
-                        (route) => false,
-                      );
                     },
-                    child: Text(
-                      "Edit Phone Number?",
-                      style: TextStyle(color: Colors.black),
-                    ),
+                    child: Text("Verify Phone Number"),
                   ),
-                ],
-              ),
-            ],
+                ),
+                Row(
+                  children: [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pushNamedAndRemoveUntil(
+                          context,
+                          'phone',
+                          (route) => false,
+                        );
+                      },
+                      child: Text(
+                        "Edit Phone Number?",
+                        style: TextStyle(color: Colors.black),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
